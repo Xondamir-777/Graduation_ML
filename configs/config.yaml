@@ -1,0 +1,67 @@
+# ─────────────────────────────────────────────────────────────
+#  Plant Disease Project — Central Config
+# ─────────────────────────────────────────────────────────────
+
+# ── Пути ──────────────────────────────────────────────────────
+# Укажи путь к папке "color" внутри скачанного PlantVillage
+plantvillage_root: "plantvillage/color"
+
+# Куда сохранять сгенерированный датасет
+dataset_output_dir: "dataset"
+
+# Куда сохранять веса модели
+checkpoint_dir:     "checkpoints"
+
+# ── Параметры генерации датасета ──────────────────────────────
+dataset:
+  samples_per_combo: 20          # строк на (регион × сезон × болезнь)
+  image_size:        [224, 224]
+  label_threshold:   0.45        # порог disease_probability → label=1
+  noise_sigma:       0.07        # гауссовый шум на вероятность
+  random_seed:       42
+
+# ── Параметры Random Forest (климатические фичи) ─────────────
+random_forest:
+  n_estimators:      200
+  max_depth:         12
+  min_samples_leaf:  3
+  class_weight:      "balanced"
+  random_seed:       42
+  # размер leaf-embedding (= n_estimators, автовычисляется)
+
+# ── CNN backbone ──────────────────────────────────────────────
+cnn:
+  backbone:          "resnet18"   # resnet18 | resnet50 | efficientnet_b0
+  pretrained:        true
+  freeze_until:      "layer3"     # заморозить слои до layer3 включительно
+  output_dim:        256          # размер CNN embedding
+
+# ── Fusion MLP ────────────────────────────────────────────────
+fusion:
+  hidden_dims:       [512, 256, 128]
+  dropout:           0.3
+  num_classes:       10           # число болезней (= len(DISEASES))
+
+# ── Обучение ──────────────────────────────────────────────────
+training:
+  epochs:            30
+  batch_size:        32
+  learning_rate:     0.0003
+  weight_decay:      0.0001
+  lr_scheduler:      "cosine"     # cosine | step | none
+  early_stopping_patience: 7
+  val_split:         0.15
+  test_split:        0.15
+  num_workers:       4
+  device:            "auto"       # auto | cpu | cuda | mps
+
+# ── Аугментации (только train) ────────────────────────────────
+augmentation:
+  random_horizontal_flip: true
+  random_vertical_flip:   false
+  color_jitter:
+    brightness: 0.2
+    contrast:   0.2
+    saturation: 0.1
+  random_rotation:  15
+  random_erasing:   true
